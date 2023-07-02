@@ -19,13 +19,7 @@ from bot_openai import Bot
 
 ## Globals
 
-player_two = Bot("player_two.txt", "You are a helpful player two, answering questions about a range of topics in a short and succinct manner")
-
-def player_one_file_write(file, data_to_write):
-    file_to_write = file
-    data_to_write = json.dumps(data_to_write)
-    with open(file_to_write, 'w+') as f:
-        f.write(data_to_write)
+player_two = Bot("player_two.txt", "You are Gary, a lonely cultist who is attempting to romance eldritch beings beyond your comprehension.")
 
 ############################################################################################################
 # Area for audio input, starting recording and stopping,
@@ -58,20 +52,22 @@ def start_recording():
     print(to_send)
     player_two.send_msg(to_send)
 
+############################################################################################################
+# Keyboard listener
+############################################################################################################
 
 def on_key_release(key):
     if key == keyboard.Key.shift:
         start_recording()
 
-
-############################################################################################################
-# 
-############################################################################################################
-
 # Start the listener for the keyboard input.
 def start_listener():
     with keyboard.Listener(on_release=on_key_release) as listener:
         listener.join()
+
+############################################################################################################
+# 
+############################################################################################################
 
 async def main():
     print("This is main!")

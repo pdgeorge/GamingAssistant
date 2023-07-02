@@ -64,11 +64,20 @@ class Bot():
         temp_system_message["role"] = "system"
         temp_system_message["content"] = system_message
         self.chat_history.append(temp_system_message)
+        self.total_tokens = 0
         print("Bot initialised, name: " + self.bot_file) # Might do something with this later. For now this is proving that the bot initialised. (Used to be name. Will use name later)
         print("Sorry, system message: ")
         print(temp_system_message)
 
+    def count_tokens(self): ## Leaving unused until I can find a good way to do it. openai.Tokenizer doesn't seem to exist.
+        for entry in self.chat_history:
+            content = entry["content"]
+            self.total_tokens += len(openai.Tokenizer.tokenize(content).tokens)
+
     def send_msg(self, data_to_give):
+
+
+
         print("ready to send message")
         normalised_dir = normalise_dir(TEXT_DIR)
         print("normalised dir: " + normalised_dir)
@@ -98,6 +107,18 @@ class Bot():
         print("chat_history for: " + self.bot_file)
         print(self.chat_history)
         read_message(bot_response["content"])
+
+        # self.count_tokens()
+        
+        # while self.tokens >= 2000:
+        #     print("deleting oldest 2 messages") # Deletes the user message and the bot's reply. Doesn't delete the system message)
+        #     del self.chat_history[1]
+        #     del self.chat_history[1]
+
+        #     self.total_tokens = 0
+        #     self.count_tokens()
+
+        # print("self.tokens is: " + self.total_tokens)
 
         write_to_file(file_to_handle, self.chat_history)
 
