@@ -14,12 +14,13 @@ from bot_openai import Bot
 # After recording, sends to Bot.send_msg to send a message to OpenAI
 # After receiving the message back, will save only the most recent message to file (Not needed, need to remove)
 # After saving, will read the message out loud. Uses gTTS to create the message and python-vlc to read the message
+# If the program crashes, press F12 to "load from file"
 
 
 
 ## Globals
 
-player_two = Bot("player_two.txt", "You are Gary, a lonely cultist who is attempting to romance eldritch beings beyond your comprehension.")
+player_two = Bot("player_two.txt", "You are Gary, a lonely cultist who is attempting to romance eldritch beings beyond your comprehension. Your responses are very short, generally one or two sentences.")
 
 ############################################################################################################
 # Area for audio input, starting recording and stopping,
@@ -59,6 +60,8 @@ def start_recording():
 def on_key_release(key):
     if key == keyboard.Key.shift:
         start_recording()
+    if key == keyboard.Key.f12:
+        player_two.load_from_file()
 
 # Start the listener for the keyboard input.
 def start_listener():

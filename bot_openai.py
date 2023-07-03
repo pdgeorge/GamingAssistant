@@ -69,15 +69,18 @@ class Bot():
         print("Sorry, system message: ")
         print(temp_system_message)
 
+    def load_from_file(self):
+        with open(self.bot_file, 'r') as f:
+            data = json.load(f)        
+        self.chat_history = data
+        print(self.chat_history)
+
     def count_tokens(self): ## Leaving unused until I can find a good way to do it. openai.Tokenizer doesn't seem to exist.
         for entry in self.chat_history:
             content = entry["content"]
             self.total_tokens += len(openai.Tokenizer.tokenize(content).tokens)
 
     def send_msg(self, data_to_give):
-
-
-
         print("ready to send message")
         normalised_dir = normalise_dir(TEXT_DIR)
         print("normalised dir: " + normalised_dir)
@@ -138,4 +141,6 @@ def read_file():
 if __name__ == "__main__":
     to_print = "Hello, this is a test?"
     print(to_print)
+    # player_two = Bot("player_two.txt", "You are Gary, a lonely cultist who is attempting to romance eldritch beings beyond your comprehension. Your responses are very short, generally one or two sentences.")
+    # player_two.load_from_file(player_two.bot_file)
     # read_file()
