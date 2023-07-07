@@ -6,6 +6,9 @@ import time
 from pynput import keyboard
 from bot_openai import Bot
 
+
+import math
+
 ## TODO: Make line 55 reference a global variable higher up for easier changing of which button is pressed to activate recording
 ## Implement token checking. "If Bot.chat_history's token is reaching too high a number, start deleting entries"
 
@@ -76,6 +79,8 @@ async def main():
     print("This is main!")
     listener_thread = threading.Thread(target=start_listener)
     listener_thread.start()
+    # task1 = asyncio.create_task(element_handler())
+    # await asyncio.gather(task1)
 
 ############################################################################################################
 # "if __name__ == "__main__""
