@@ -41,8 +41,6 @@ class OBSWebsocketsManager():
         self.ws.call(set_transform_request)
 
     def shake(self, scene_name, element_name, rot):
-        print("shake a shake a")
-
         scene_item_id = self.get_item_id(scene_name, element_name)
 
         transform_data = {
@@ -55,8 +53,6 @@ class OBSWebsocketsManager():
 
         set_transform_request = obswebsocket.requests.SetSceneItemTransform(**transform_data)
         self.ws.call(set_transform_request)
-
-        print("shake b shake b")
 
     def source_checker(self, scene_name):
         response = self.ws.call(obswebsocket.requests.GetSceneItemList(sceneName=scene_name))

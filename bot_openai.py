@@ -11,8 +11,10 @@ import openai
 import json
 # locally made
 from OBS_Websocket import OBSWebsocketsManager
-import pyaudio
+import sounddevice as sd
 import numpy as np
+
+import random
 
 TEXT_DIR = ""
 TTS_DIR = "outputs"
@@ -21,14 +23,11 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 SCENE_NAME = "ingame"
 ELEMENT_NAME = "CultistGary"
 
-CHUNK_SIZE = 1024
-FORMAT = pyaudio.paInt16
-CHANNELS = 2
-RATE = 44100
-MIN_AMPLITUDE = 1000
+SAMPLE_RATE = 44100
+CHUNK_SIZE = int(SAMPLE_RATE * 0.1)
+DURATION = 1.0
 
-ROT_MIN = 10
-ROT_MAX = 30
+MOVEMENT_MULTIPLIER = 1000
 
 def write_to_file(file, data_to_write):
     file_to_write = file
@@ -69,35 +68,27 @@ class Bot():
         self.total_tokens = 0
 
         # Audio normalisation variables
-        self.audio_average_summed = (ROT_MAX + ROT_MIN) / 2.0
-        self.audio_average = float(ROT_MAX + ROT_MIN) / 2.0
-        self.audio_running_min = 0.00000000
-        self.audio_running_max = 9999999999.99999
-        self.audio_ticks = 2
-
+        self.audio_peak_level = 0
 
         # "I am alive!"
         print("Bot initialised, name: " + self.bot_file) # Might do something with this later. For now this is proving that the bot initialised. (Used to be name. Will use name later)
         print("Sorry, system message: ")
         print(temp_system_message)
 
-    def normalise_loudness(self, value):
-        self.audio_running_min = min(value, self.audio_running_min)
-        self.audio_running_max = max(value, self.audio_running_max)
-        self.audio_ticks += 1
+    def audio_callback(self, indata, frames, time, status):
+        rms = np.sqrt(np.mean(indata**2))
 
-        normalised_value = ((value - self.audio_running_min) / (self.audio_running_max - self.audio_running_min)) * (ROT_MAX - ROT_MIN) + ROT_MIN
-        
-        # Calculate the average, slowly bring the max down to the average
-        self.audio_average_summed += normalised_value
-        self.audio_average = float(self.audio_average_summed) / float(self.audio_ticks)
-        if self.audio_running_max > self.audio_average:
-            self.audio_running_max -= 1
-        
-        if normalised_value == math.isnan(normalised_value):
-            return 0
+        if rms > self.audio_peak_level:
+            self.audio_peak_level = rms
 
-        return normalised_value
+        if time.inputBufferAdcTime >= DURATION:
+            print("Peak level:", self.audio_peak_level)
+
+            loudness = self.audio_peak_level * MOVEMENT_MULTIPLIER
+            self.obs_websocketmanager.shake(SCENE_NAME, ELEMENT_NAME, loudness)
+            print("current loudness: ", str(loudness))
+
+            self.audio_peak_level = 0.0
 
     def read_message(self, msg):
         msgAudio = gTTS(text=msg, lang="en", slow=False)
@@ -113,21 +104,15 @@ class Bot():
         p.audio_output_device_get()
         p.play()
 
-        audio = pyaudio.PyAudio()
-        stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK_SIZE)
-
         # Make visible
         self.obs_websocketmanager.set_source_visibility(SCENE_NAME, ELEMENT_NAME, True)
         
         while p.get_state() != vlc.State.Ended:
-            data = stream.read(CHUNK_SIZE)
-            audio_data = np.frombuffer(data, dtype=np.int16)
-            loudness = np.abs(audio_data).mean()
-            loudness = self.normalise_loudness(loudness)
 
-            self.obs_websocketmanager.shake(SCENE_NAME, ELEMENT_NAME, loudness)
+            with sd.InputStream(device=27, channels=2, samplerate=SAMPLE_RATE, callback=self.audio_callback, blocksize=CHUNK_SIZE):
+                sd.sleep(int(DURATION * 1000))
 
-            print("current loudness: ", str(loudness))
+            print("Peak level: ", self.audio_peak_level)
 
             time.sleep(0.1)
 
@@ -136,9 +121,7 @@ class Bot():
         self.obs_websocketmanager.set_source_visibility(SCENE_NAME, ELEMENT_NAME, True)
 
         time.sleep(0.1)
-        stream.stop_stream()
-        stream.close()
-        audio.terminate()
+        
         duration = p.get_length() / 1000
         print("duration: " + str(duration))
         time.sleep(duration)
@@ -199,6 +182,7 @@ def read_file():
 if __name__ == "__main__":
     to_print = "Hello, this is a test?"
     print(to_print)
+    # print(sd.query_devices())
     player_two = Bot("player_two.txt", "You are Gary, a lonely cultist who is attempting to romance eldritch beings beyond your comprehension. Your responses are very short, generally one or two sentences.")
     player_two.read_message("I spend my days studying forbidden texts. aaaaaaeeeeeeeeeeee gagagagagaga waffle waffle waffle waffle cheese steak")
     # read_file()
