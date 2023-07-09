@@ -1,28 +1,26 @@
 import asyncio
 import speech_recognition as sr
-import json
 import threading
 import time
 from pynput import keyboard
 from bot_openai import Bot
 
-
-import math
-
 ## TODO: Make line 55 reference a global variable higher up for easier changing of which button is pressed to activate recording
-## Implement token checking. "If Bot.chat_history's token is reaching too high a number, start deleting entries"
+## Done
+## TODO: Implement token checking. "If Bot.chat_history's token is reaching too high a number, start deleting entries"
 
 ## Program flow: 
-# Player presses shift, or can change button on line 55, should maybe make it a constant higher up for easier changing?
+# Player presses shift, or whatever button is defined in ACTIVATE_STT_KEY
 # After recording, sends to Bot.send_msg to send a message to OpenAI
 # After receiving the message back, will save only the most recent message to file (Not needed, need to remove)
 # After saving, will read the message out loud. Uses gTTS to create the message and python-vlc to read the message
 # If the program crashes, press F12 to "load from file"
 
-
+## Constants
+ACTIVATE_STT_KEY = keyboard.Key.shift
+LOAD_MEMORY_KEY = keyboard.Key.f12
 
 ## Globals
-
 player_two = Bot("player_two.txt", "You are Gary, a lonely cultist who is attempting to romance eldritch beings beyond your comprehension. Your responses are very short, generally one or two sentences.")
 
 ############################################################################################################
@@ -61,9 +59,9 @@ def start_recording():
 ############################################################################################################
 
 def on_key_release(key):
-    if key == keyboard.Key.shift:
+    if key == ACTIVATE_STT_KEY:
         start_recording()
-    if key == keyboard.Key.f12:
+    if key == LOAD_MEMORY_KEY:
         player_two.load_from_file()
 
 # Start the listener for the keyboard input.

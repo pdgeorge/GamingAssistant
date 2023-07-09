@@ -27,7 +27,7 @@ SAMPLE_RATE = 44100
 CHUNK_SIZE = int(SAMPLE_RATE * 0.1)
 DURATION = 1.0
 
-MOVEMENT_MULTIPLIER = 1000
+MOVEMENT_MULTIPLIER = 500
 
 def write_to_file(file, data_to_write):
     file_to_write = file
@@ -44,9 +44,9 @@ def normalise_dir(dir):
 class Bot():
     tts_enabled = True
     model = "gpt-3.5-turbo" # Choose which chat model to go with
-    #
+    
     voice_name = "en-US-DavisNeural" 
-    #
+    
     user_message = "test message"
     bot_file = None
     input_queue = Queue()
@@ -82,11 +82,9 @@ class Bot():
             self.audio_peak_level = rms
 
         if time.inputBufferAdcTime >= DURATION:
-            print("Peak level:", self.audio_peak_level)
 
             loudness = self.audio_peak_level * MOVEMENT_MULTIPLIER
             self.obs_websocketmanager.shake(SCENE_NAME, ELEMENT_NAME, loudness)
-            print("current loudness: ", str(loudness))
 
             self.audio_peak_level = 0.0
 
@@ -112,19 +110,16 @@ class Bot():
             with sd.InputStream(device=27, channels=2, samplerate=SAMPLE_RATE, callback=self.audio_callback, blocksize=CHUNK_SIZE):
                 sd.sleep(int(DURATION * 1000))
 
-            print("Peak level: ", self.audio_peak_level)
-
             time.sleep(0.1)
 
         # Return to flat then turn invisible
         self.obs_websocketmanager.shake(SCENE_NAME, ELEMENT_NAME, 0)
-        self.obs_websocketmanager.set_source_visibility(SCENE_NAME, ELEMENT_NAME, True)
+        self.obs_websocketmanager.set_source_visibility(SCENE_NAME, ELEMENT_NAME, False)
 
         time.sleep(0.1)
         
         duration = p.get_length() / 1000
         print("duration: " + str(duration))
-        time.sleep(duration)
         #3:02:40
 
     def load_from_file(self):
@@ -146,11 +141,15 @@ class Bot():
         print("chat message is: ")
         print(data_to_give)
         self.chat_history.append(self.chat_message)
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=self.chat_history,
-            temperature=0.6,
-        )
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=self.chat_history,
+                temperature=0.6,
+            )
+        except Exception as e:
+            print("An exception occurred:", str(e))
+            response = {'role': 'Assistant', 'content': 'Sorry, there was an exception. '+str(e)}
 
         # data_to_give is the data received from the previous LLM
         # content_to_write is the data to be written to the file, that has been returned by the LLM
